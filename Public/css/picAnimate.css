@@ -1,0 +1,28 @@
+﻿/**picAnimate�Ŀ�����ΪͼƬ���,����**/
+#picAnimate{width:1050x;height:453px;margin:0 auto;position:relative; overflow: hidden;}
+#picAnimate img{position:absolute;left:0;top:0;}
+.btn{position:absolute;top:380px;z-index:99999; left:490px;}
+.btn span{width:14px;height:14px;display:inline-block;margin:3px 0 0 0;overflow:hidden;cursor:pointer;background:url(img/nd1.png) no-repeat;_display:inline-block;}
+.btn span.btnSelected{ background:url(img/nd2.png) no-repeat}
+
+
+/*��ͷͼƬ*/
+
+.pageContainer{position:relative;width:750px;height:321px;margin:0 auto;}
+.picAnimatemoju{width:750px;height:321px;overflow:hidden;margin:0 auto;position:relative;}
+/*ȥ��ulĬ�ϵ�padding margin*/
+.picAnimatemoju ul{list-style:none;position:absolute;padding:0;margin:0;}
+.picAnimatemoju ul li{float:left;}
+
+.control{position:absolute;cursor:pointer;}
+#left{top:180px;left:0;}
+#right{top:180px;right:0;}
+
+
+.pageContainercp{position:relative;width:750px;height:478px; padding:30px 0;}
+.picAnimatecp{width:750px;height:478px;overflow:hidden;margin:0 auto;position:relative;}
+.picAnimatecp ul{list-style:none;position:absolute;padding:0;margin:0;}
+.picAnimatecp ul li{float:left;}
+
+#leftcp{top:200px;left:0;}
+#rightcp{top:200px;right:0;}
