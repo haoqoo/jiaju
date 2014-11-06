@@ -13,7 +13,7 @@
 </script>
 
 <script type="text/javascript" src="/jiaju/Public/js/jquery.js"></script>
-<link rel="stylesheet" type="text/css" href="/jiaju/Public/style/ebadusmenu.css" />
+<link rel="stylesheet" type="text/css" href="/jiaju/Public/css/ebadusmenu.css" />
 <script type="text/javascript" src="/jiaju/Public/js/ebadusmenu.js"></script>
 <script type="text/javascript">
 //ebadusmenu.definemenu("anchorid", "menuid", "mouseover|click")
