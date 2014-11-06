@@ -1,0 +1,96 @@
+div, h1, h2, h3, h4,h5,p, form, label,img, span, a img, hr {margin:0; padding:0; border:none;}
+a{blr:expression(this.onFocus=this.blur())}
+ul,li{margin:0; padding:0; list-style-type:none;}
+a{ text-decoration:none;color:#868686;}
+a:hover{text-decoration: underline}
+
+
+body {
+	font-family:"宋体", Arial;
+	font-size:12px;
+	color:#868686;
+	margin:0;
+	padding:0;
+	line-height:20px;
+	}
+img{vertical-align:top;}
+dl,dt,dd{margin:0; padding:0; list-style-type:none;}
+select,input{ font-family:"宋体", Arial; font-size:12px;}
+
+#andiv{ width:100%; padding:10px;}
+#andiv li { width:330px; height:280px; float:left; margin-left:5px; text-align:center; padding:0px; background-color:#999;}
+#andiv img{ width:340px; height:280px; float:left;margin-left:5px;}
+
+.life_box {
+	width:988px;
+	margin:auto;
+	}
+.life_box .content {
+	margin-top:10px;
+	padding:0 20px 20px 20px;
+	float:left;
+	width:988px;
+	}
+	.life_box .title {
+	margin-top:10px;
+	float:left;
+	width:988px;
+	}
+.life_box .title h1 {
+	font-size: 16px;
+	padding-top:30px;
+	padding-left:20px;
+	padding-bottom:10px;
+	font-weight: normal;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #E2E2E2;
+	}
+.life_box ul {
+	width:975px;
+	float:left;
+	padding-left:10px;
+	}
+.life_box ul li {
+	width: 325px;
+	margin:auto;	
+	float: left;
+	text-align: center;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #E2E2E2;
+	padding-bottom:20px;
+	padding-top:10px;
+	}
+.life_box ul li h2{
+	width:325px;	
+	font-size:14px;
+	text-align:left;
+	margin:auto;
+	height:35px;
+	line-height:35px;
+	}
+.life_box ul li .brief {
+	width:320px;
+	height:70px;
+	float:left;
+	text-align:left;
+	margin-bottom:20px;
+	}
+.life_box ul li .brief a {color:#A4A3A3; font-size:12px; font-family:'宋体';}
+.life_box ul li h3 {
+	text-align:left;
+	}
+.life_box ul li .pic {
+	width:310px;
+	height:210px;
+	margin-top:10px;
+	}
+.life_box ul li .pic img {
+	width:310px;
+	height:210px;
+	}
+.contfb table{ }
+.contfb td{ padding:10px; text-align:left; vertical-align: top; line-height:25px;}
+.contfb td p{ font-size:14px;}
+.contfb hr{ border-top:1px #000 solid;}
