@@ -5,7 +5,7 @@
 * @author Roddy <luolonghao@gmail.com>
 * @website http://www.kindsoft.net/
 * @licence http://www.kindsoft.net/license.php
-* @version 4.1.5 (2013-01-20)
+* @version 4.1.10 (2013-11-23)
 *******************************************************************************/
 (function (window, undefined) {
 	if (window.KindEditor) {
@@ -17,15 +17,17 @@ if (!window.console) {
 if (!console.log) {
 	console.log = function () {};
 }
-var _VERSION = '4.1.5 (2013-01-20)',
+var _VERSION = '4.1.10 (2013-11-23)',
 	_ua = navigator.userAgent.toLowerCase(),
 	_IE = _ua.indexOf('msie') > -1 && _ua.indexOf('opera') == -1,
+	_NEWIE = _ua.indexOf('msie') == -1 && _ua.indexOf('trident') > -1,
 	_GECKO = _ua.indexOf('gecko') > -1 && _ua.indexOf('khtml') == -1,
 	_WEBKIT = _ua.indexOf('applewebkit') > -1,
 	_OPERA = _ua.indexOf('opera') > -1,
 	_MOBILE = _ua.indexOf('mobile') > -1,
 	_IOS = /ipad|iphone|ipod/.test(_ua),
 	_QUIRKS = document.compatMode != 'CSS1Compat',
+	_IERANGE = !window.getSelection,
 	_matches = /(?:msie|firefox|webkit|opera)[\/:\s](\d+)/.exec(_ua),
 	_V = _matches ? _matches[1] : '0',
 	_TIME = new Date().getTime();
@@ -397,15 +399,17 @@ _extend(KEvent, {
 		var ev = this.event;
 		if (ev.preventDefault) {
 			ev.preventDefault();
+		} else {
+			ev.returnValue = false;
 		}
-		ev.returnValue = false;
 	},
 	stopPropagation : function() {
 		var ev = this.event;
 		if (ev.stopPropagation) {
 			ev.stopPropagation();
+		} else {
+			ev.cancelBubble = true;
 		}
-		ev.cancelBubble = true;
 	},
 	stop : function() {
 		this.preventDefault();
@@ -544,12 +548,18 @@ function _ctrl(el, key, fn) {
 		}
 	});
 }
+var _readyFinished = false;
 function _ready(fn) {
+	if (_readyFinished) {
+		fn(KindEditor);
+		return;
+	}
 	var loaded = false;
 	function readyFunc() {
 		if (!loaded) {
 			loaded = true;
 			fn(KindEditor);
+			_readyFinished = true;
 		}
 	}
 	function ieReadyFunc() {
@@ -706,6 +716,9 @@ function _formatUrl(url, mode, host, pathname) {
 	return url;
 }
 function _formatHtml(html, htmlTags, urlType, wellFormatted, indentChar) {
+	if (html == null) {
+		html = '';
+	}
 	urlType = urlType || '';
 	wellFormatted = _undef(wellFormatted, false);
 	indentChar = _undef(indentChar, '\t');
@@ -717,6 +730,10 @@ function _formatHtml(html, htmlTags, urlType, wellFormatted, indentChar) {
 	html = html.replace(/(<(?:p|p\s[^>]*)>)\s*(<\/p>)/ig, '$1<br />$2');
 	html = html.replace(/\u200B/g, '');
 	html = html.replace(/\u00A9/g, '&copy;');
+	html = html.replace(/\u00AE/g, '&reg;');
+	html = html.replace(/<[^>]+/g, function($0) {
+		return $0.replace(/\s+/g, ' ');
+	});
 	var htmlTagMap = {};
 	if (htmlTags) {
 		_each(htmlTags, function(key, val) {
@@ -732,7 +749,7 @@ function _formatHtml(html, htmlTags, urlType, wellFormatted, indentChar) {
 			html = html.replace(/(<(?:style|style\s[^>]*)>)([\s\S]*?)(<\/style>)/ig, '');
 		}
 	}
-	var re = /([ \t\n\r]*)<(\/)?([\w\-:]+)((?:\s+|(?:\s+[\w\-:]+)|(?:\s+[\w\-:]+=[^\s"'<>]+)|(?:\s+[\w\-:"]+="[^"]*")|(?:\s+[\w\-:"]+='[^']*'))*)(\/)?>([ \t\n\r]*)/g;
+	var re = /(\s*)<(\/)?([\w\-:]+)((?:\s+|(?:\s+[\w\-:]+)|(?:\s+[\w\-:]+=[^\s"'<>]+)|(?:\s+[\w\-:"]+="[^"]*")|(?:\s+[\w\-:"]+='[^']*'))*)(\/)?>(\s*)/g;
 	var tagStack = [];
 	html = html.replace(re, function($0, $1, $2, $3, $4, $5, $6) {
 		var full = $0,
@@ -920,10 +937,14 @@ function _mediaImg(blankPath, attrs) {
 		type = attrs.type || _mediaType(attrs.src),
 		srcTag = _mediaEmbed(attrs),
 		style = '';
-	if (width > 0) {
+	if (/\D/.test(width)) {
+		style += 'width:' + width + ';';
+	} else if (width > 0) {
 		style += 'width:' + width + 'px;';
 	}
-	if (height > 0) {
+	if (/\D/.test(height)) {
+		style += 'height:' + height + ';';
+	} else if (height > 0) {
 		style += 'height:' + height + 'px;';
 	}
 	var html = '<img class="' + _mediaClass(type) + '" src="' + blankPath + '" ';
@@ -1068,7 +1089,7 @@ function _queryAll(expr, root) {
 		for (var i = 0, len = els.length; i < len; i++) {
 			el = els[i];
 			if (cmpTag(tag, el.nodeName) && _contains(root, el)) {
-				if (el.getAttributeNode('name')) {
+				if (el.getAttribute('name') !== null) {
 					arr.push(el);
 				}
 			}
@@ -1256,7 +1277,7 @@ function _docWidth(doc) {
 function _getScrollPos(doc) {
 	doc = doc || document;
 	var x, y;
-	if (_IE || _OPERA) {
+	if (_IE || _NEWIE || _OPERA) {
 		x = _docElement(doc).scrollLeft;
 		y = _docElement(doc).scrollTop;
 	} else {
@@ -2042,7 +2063,7 @@ function _toRange(rng) {
 			start.offset = 0;
 		}
 	}
-	if (_IE) {
+	if (_IERANGE) {
 		if (rng.item) {
 			doc = _getDoc(rng.item(0));
 			range = new KRange(doc);
@@ -2154,7 +2175,7 @@ _extend(KRange, {
 	},
 	compareBoundaryPoints : function(how, range) {
 		var rangeA = this.get(), rangeB = range.get();
-		if (_IE) {
+		if (_IERANGE) {
 			var arr = {};
 			arr[_START_TO_START] = 'StartToStart';
 			arr[_START_TO_END] = 'EndToStart';
@@ -2215,7 +2236,7 @@ _extend(KRange, {
 		return new KRange(this.doc).setStart(this.startContainer, this.startOffset).setEnd(this.endContainer, this.endOffset);
 	},
 	toString : function() {
-		var rng = this.get(), str = _IE ? rng.text : rng.toString();
+		var rng = this.get(), str = _IERANGE ? rng.text : rng.toString();
 		return str.replace(/\r\n|\n|\r/g, '');
 	},
 	cloneContents : function() {
@@ -2294,7 +2315,7 @@ _extend(KRange, {
 	},
 	get : function(hasControlRange) {
 		var self = this, doc = self.doc, node, rng;
-		if (!_IE) {
+		if (!_IERANGE) {
 			rng = doc.createRange();
 			try {
 				rng.setStart(self.startContainer, self.startOffset);
@@ -2499,7 +2520,7 @@ function _nativeCommandValue(doc, key) {
 }
 function _getSel(doc) {
 	var win = _getWin(doc);
-	return doc.selection || win.getSelection();
+	return _IERANGE ? doc.selection : win.getSelection();
 }
 function _getRng(doc) {
 	var sel = _getSel(doc), rng;
@@ -2510,7 +2531,7 @@ function _getRng(doc) {
 			rng = sel.createRange();
 		}
 	} catch(e) {}
-	if (_IE && (!rng || (!rng.item && rng.parentElement().ownerDocument !== doc))) {
+	if (_IERANGE && (!rng || (!rng.item && rng.parentElement().ownerDocument !== doc))) {
 		return null;
 	}
 	return rng;
@@ -2603,7 +2624,10 @@ function _getInnerNode(knode) {
 	return inner;
 }
 function _isEmptyNode(knode) {
-	return knode.type == 1 && knode.html().replace(/<[^>]+>/g, '') === '';
+	if (knode.type != 1 || knode.isSingle()) {
+		return false;
+	}
+	return knode.html().replace(/<[^>]+>/g, '') === '';
 }
 function _mergeWrapper(a, b) {
 	a = a.clone(true);
@@ -2700,7 +2724,7 @@ _extend(KCmd, {
 			ec = range.endContainer, eo = range.endOffset,
 			doc = _getDoc(sc), win = self.win, rng, hasU200b = false;
 		if (hasDummy && sc.nodeType == 1 && range.collapsed) {
-			if (_IE) {
+			if (_IERANGE) {
 				var dummy = K('<span>&nbsp;</span>', doc);
 				range.insertNode(dummy[0]);
 				rng = doc.body.createTextRange();
@@ -2721,7 +2745,7 @@ _extend(KCmd, {
 				}
 			}
 		}
-		if (_IE) {
+		if (_IERANGE) {
 			try {
 				rng = range.get(true);
 				rng.select();
@@ -2733,8 +2757,10 @@ _extend(KCmd, {
 			rng = range.get(true);
 			sel.removeAllRanges();
 			sel.addRange(rng);
-			var pos = K(rng.endContainer).pos();
-			win.scrollTo(pos.x, pos.y);
+			if (doc !== document) {
+				var pos = K(rng.endContainer).pos();
+				win.scrollTo(pos.x, pos.y);
+			}
 		}
 		win.focus();
 		return self;
@@ -3081,30 +3107,19 @@ _extend(KCmd, {
 		});
 	},
 	forecolor : function(val) {
-		return this.toggle('<span style="color:' + val + ';"></span>', {
-			span : '.color=' + val,
-			font : 'color'
-		});
+		return this.wrap('<span style="color:' + val + ';"></span>').select();
 	},
 	hilitecolor : function(val) {
-		return this.toggle('<span style="background-color:' + val + ';"></span>', {
-			span : '.background-color=' + val
-		});
+		return this.wrap('<span style="background-color:' + val + ';"></span>').select();
 	},
 	fontsize : function(val) {
-		return this.toggle('<span style="font-size:' + val + ';"></span>', {
-			span : '.font-size=' + val,
-			font : 'size'
-		});
+		return this.wrap('<span style="font-size:' + val + ';"></span>').select();
 	},
 	fontname : function(val) {
 		return this.fontfamily(val);
 	},
 	fontfamily : function(val) {
-		return this.toggle('<span style="font-family:' + val + ';"></span>', {
-			span : '.font-family=' + val,
-			font : 'face'
-		});
+		return this.wrap('<span style="font-family:' + val + ';"></span>').select();
 	},
 	removeformat : function() {
 		var map = {
@@ -3148,7 +3163,7 @@ _extend(KCmd, {
 			range.collapse(false);
 			self.select(false);
 		}
-		if (_IE && quickMode) {
+		if (_IERANGE && quickMode) {
 			try {
 				pasteHtml(range, val);
 			} catch(e) {
@@ -3210,14 +3225,26 @@ _extend(KCmd, {
 			range.selectNode(node[0]);
 			return self.select();
 		}
+		function setAttr(node, url, type) {
+			K(node).attr('href', url).attr('data-ke-src', url);
+			if (type) {
+				K(node).attr('target', type);
+			} else {
+				K(node).removeAttr('target');
+			}
+		}
+		var sc = range.startContainer, so = range.startOffset,
+			ec = range.endContainer, eo = range.endOffset;
+		if (sc.nodeType == 1 && sc === ec && so + 1 === eo) {
+			var child = sc.childNodes[so];
+			if (child.nodeName.toLowerCase() == 'a') {
+				setAttr(child, url, type);
+				return self;
+			}
+		}
 		_nativeCommand(doc, 'createlink', '__kindeditor_temp_url__');
 		K('a[href="__kindeditor_temp_url__"]', doc).each(function() {
-			K(this).attr('href', url).attr('data-ke-src', url);
-			if (type) {
-				K(this).attr('target', type);
-			} else {
-				K(this).removeAttr('target');
-			}
+			setAttr(this, url, type);
 		});
 		return self;
 	},
@@ -3249,7 +3276,10 @@ _each(('formatblock,selectall,justifyleft,justifycenter,justifyright,justifyfull
 		var self = this;
 		self.select();
 		_nativeCommand(self.doc, name, val);
-		if (!_IE || _inArray(name, 'formatblock,selectall,insertorderedlist,insertunorderedlist'.split(',')) >= 0) {
+		if (_IERANGE && _inArray(name, 'justifyleft,justifycenter,justifyright,justifyfull'.split(',')) >= 0) {
+			self.selection();
+		}
+		if (!_IERANGE || _inArray(name, 'formatblock,selectall,insertorderedlist,insertunorderedlist'.split(',')) >= 0) {
 			self.selection();
 		}
 		return self;
@@ -3593,13 +3623,16 @@ _extend(KEdit, KWidget, {
 			bodyClass = options.bodyClass,
 			cssPath = options.cssPath,
 			cssData = options.cssData,
-			isDocumentDomain = location.host.replace(/:\d+/, '') !== document.domain,
+			isDocumentDomain = location.protocol != 'res:' && location.host.replace(/:\d+/, '') !== document.domain,
 			srcScript = ('document.open();' +
 				(isDocumentDomain ? 'document.domain="' + document.domain + '";' : '') +
 				'document.close();'),
 			iframeSrc = _IE ? ' src="javascript:void(function(){' + encodeURIComponent(srcScript) + '}())"' : '';
 		self.iframe = K('<iframe class="ke-edit-iframe" hidefocus="true" frameborder="0"' + iframeSrc + '></iframe>').css('width', '100%');
 		self.textarea = K('<textarea class="ke-edit-textarea" hidefocus="true"></textarea>').css('width', '100%');
+		self.tabIndex = isNaN(parseInt(options.tabIndex, 10)) ? self.srcElement.attr('tabindex') : parseInt(options.tabIndex, 10);
+		self.iframe.attr('tabindex', self.tabIndex);
+		self.textarea.attr('tabindex', self.tabIndex);
 		if (self.width) {
 			self.setWidth(self.width);
 		}
@@ -3635,13 +3668,14 @@ _extend(KEdit, KWidget, {
 				});
 			}
 			if (_IE) {
-				K(document).mousedown(function() {
-					if (cmd.range.isControl()) {
+				self._mousedownHandler = function() {
+					var newRange = cmd.range.cloneRange();
+					newRange.shrink();
+					if (newRange.isControl()) {
 						self.blur();
 					}
-				});
-			}
-			if (_IE) {
+				};
+				K(document).mousedown(self._mousedownHandler);
 				K(doc).keydown(function(e) {
 					if (e.which == 8) {
 						cmd.selection();
@@ -3683,12 +3717,16 @@ _extend(KEdit, KWidget, {
 		!isDocumentDomain && ready();
 	},
 	setWidth : function(val) {
-		this.div.css('width', _addUnit(val));
-		return this;
+		var self = this;
+		val = _addUnit(val);
+		self.width = val;
+		self.div.css('width', val);
+		return self;
 	},
 	setHeight : function(val) {
 		var self = this;
 		val = _addUnit(val);
+		self.height = val;
 		self.div.css('height', val);
 		self.iframe.css('height', val);
 		if ((_IE && _V < 8) || _QUIRKS) {
@@ -3702,6 +3740,9 @@ _extend(KEdit, KWidget, {
 		K(doc.body).unbind();
 		K(doc).unbind();
 		K(self.win).unbind();
+		if (self._mousedownHandler) {
+			K(document).unbind('mousedown', self._mousedownHandler);
+		}
 		_elementVal(self.srcElement, self.html());
 		self.srcElement.show();
 		doc.write('');
@@ -4130,8 +4171,9 @@ _extend(KUploadButton, {
 		self.button = button;
 		self.iframe = options.target ? K('iframe[name="' + target + '"]') : K('iframe', div);
 		self.form = options.form ? K(options.form) : K('form', div);
+		self.fileBox = K('.ke-upload-file', div);
 		var width = options.width || K('.ke-button-common', div).width();
-		self.fileBox = K('.ke-upload-file', div).width(width);
+		K('.ke-upload-area', div).width(width);
 		self.options = options;
 	},
 	submit : function() {
@@ -4152,6 +4194,7 @@ _extend(KUploadButton, {
 			} else {
 				str = doc.body.innerHTML;
 			}
+			str = _unescape(str);
 			iframe[0].src = 'javascript:false';
 			try {
 				data = K.json(str);
@@ -4756,12 +4799,10 @@ function KEditor(options) {
 	self.initContent = '';
 	self.plugin = {};
 	self.isCreated = false;
-	self.isLoading = false;
 	self._handlers = {};
 	self._contextmenus = [];
 	self._undoStack = [];
 	self._redoStack = [];
-	self._calledPlugins = {};
 	self._firstAddBookmark = true;
 	self.menu = self.contextmenu = null;
 	self.dialogs = [];
@@ -4773,28 +4814,25 @@ KEditor.prototype = {
 	loadPlugin : function(name, fn) {
 		var self = this;
 		if (_plugins[name]) {
-			if (self._calledPlugins[name]) {
-				if (fn) {
-					fn.call(self);
-				}
+			if (!_isFunction(_plugins[name])) {
+				setTimeout(function() {
+					self.loadPlugin(name, fn);
+				}, 100);
 				return self;
 			}
 			_plugins[name].call(self, KindEditor);
 			if (fn) {
 				fn.call(self);
 			}
-			self._calledPlugins[name] = true;
 			return self;
 		}
-		if (self.isLoading) {
-			return self;
-		}
-		self.isLoading = true;
+		_plugins[name] = 'loading';
 		_loadScript(self.pluginsPath + name + '/' + name + '.js?ver=' + encodeURIComponent(K.DEBUG ? _TIME : _VERSION), function() {
-			self.isLoading = false;
-			if (_plugins[name]) {
-				self.loadPlugin(name, fn);
-			}
+			setTimeout(function() {
+				if (_plugins[name]) {
+					self.loadPlugin(name, fn);
+				}
+			}, 0);
 		});
 		return self;
 	},
@@ -4950,6 +4988,7 @@ KEditor.prototype = {
 			cssData : self.cssData,
 			beforeGetHtml : function(html) {
 				html = self.beforeGetHtml(html);
+				html = _removeBookmarkTag(_removeTempTag(html));
 				return _formatHtml(html, self.filterMode ? self.htmlTags : null, self.urlType, self.wellFormatMode, self.indentChar);
 			},
 			beforeSetHtml : function(html) {
@@ -4997,6 +5036,14 @@ KEditor.prototype = {
 				if (self.initContent === '') {
 					self.initContent = self.html();
 				}
+				if (self._undoStack.length > 0) {
+					var prev = self._undoStack.pop();
+					if (prev.start) {
+						self.html(prev.html);
+						edit.cmd.range.moveToBookmark(prev);
+						self.select();
+					}
+				}
 				self.afterCreate();
 				if (self.options.afterCreate) {
 					self.options.afterCreate.call(self);
@@ -5006,36 +5053,25 @@ KEditor.prototype = {
 		statusbar.removeClass('statusbar').addClass('ke-statusbar')
 			.append('<span class="ke-inline-block ke-statusbar-center-icon"></span>')
 			.append('<span class="ke-inline-block ke-statusbar-right-icon"></span>');
-		K(window).unbind('resize');
+		if (self._fullscreenResizeHandler) {
+			K(window).unbind('resize', self._fullscreenResizeHandler);
+			self._fullscreenResizeHandler = null;
+		}
 		function initResize() {
 			if (statusbar.height() === 0) {
 				setTimeout(initResize, 100);
 				return;
 			}
-			self.resize(width, height);
+			self.resize(width, height, false);
 		}
 		initResize();
-		function newResize(width, height, updateProp) {
-			updateProp = _undef(updateProp, true);
-			if (width && width >= self.minWidth) {
-				self.resize(width, null);
-				if (updateProp) {
-					self.width = _addUnit(width);
-				}
-			}
-			if (height && height >= self.minHeight) {
-				self.resize(null, height);
-				if (updateProp) {
-					self.height = _addUnit(height);
-				}
-			}
-		}
 		if (fullscreenMode) {
-			K(window).bind('resize', function(e) {
+			self._fullscreenResizeHandler = function(e) {
 				if (self.isCreated) {
-					newResize(_docElement().clientWidth, _docElement().clientHeight, false);
+					self.resize(_docElement().clientWidth, _docElement().clientHeight, false);
 				}
-			});
+			};
+			K(window).bind('resize', self._fullscreenResizeHandler);
 			toolbar.select('fullscreen');
 			statusbar.first().css('visibility', 'hidden');
 			statusbar.last().css('visibility', 'hidden');
@@ -5051,7 +5087,7 @@ KEditor.prototype = {
 					clickEl : statusbar,
 					moveFn : function(x, y, width, height, diffX, diffY) {
 						height += diffY;
-						newResize(null, height);
+						self.resize(null, height);
 					}
 				});
 			} else {
@@ -5064,7 +5100,7 @@ KEditor.prototype = {
 					moveFn : function(x, y, width, height, diffX, diffY) {
 						width += diffX;
 						height += diffY;
-						newResize(width, height);
+						self.resize(width, height);
 					}
 				});
 			} else {
@@ -5097,17 +5133,26 @@ KEditor.prototype = {
 		self.isCreated = false;
 		return self;
 	},
-	resize : function(width, height) {
+	resize : function(width, height, updateProp) {
 		var self = this;
-		if (width !== null) {
-			if (_removeUnit(width) > self.minWidth) {
-				self.container.css('width', _addUnit(width));
+		updateProp = _undef(updateProp, true);
+		if (width) {
+			if (!/%/.test(width)) {
+				width = _removeUnit(width);
+				width = width < self.minWidth ? self.minWidth : width;
+			}
+			self.container.css('width', _addUnit(width));
+			if (updateProp) {
+				self.width = _addUnit(width);
 			}
 		}
-		if (height !== null && self.toolbar.div && self.statusbar) {
-			height = _removeUnit(height) - self.toolbar.div.height() - self.statusbar.height();
-			if (height > 0 && _removeUnit(height) > self.minHeight) {
-				self.edit.setHeight(height);
+		if (height) {
+			height = _removeUnit(height);
+			editHeight = _removeUnit(height) - self.toolbar.div.height() - self.statusbar.height();
+			editHeight = editHeight < self.minHeight ? self.minHeight : editHeight;
+			self.edit.setHeight(editHeight);
+			if (updateProp) {
+				self.height = _addUnit(height);
 			}
 		}
 		return self;
@@ -5122,6 +5167,9 @@ KEditor.prototype = {
 			return self.isCreated ? self.edit.html() : _elementVal(self.srcElement);
 		}
 		self.isCreated ? self.edit.html(val) : _elementVal(self.srcElement, val);
+		if (self.isCreated) {
+			self.cmd.selection();
+		}
 		return self;
 	},
 	fullHtml : function() {
@@ -5142,13 +5190,15 @@ KEditor.prototype = {
 		return _trim(this.initContent.replace(/\r\n|\n|\r|t/g, '')) !== _trim(this.html().replace(/\r\n|\n|\r|t/g, ''));
 	},
 	selectedHtml : function() {
-		return this.isCreated ? this.cmd.range.html() : '';
+		var val = this.isCreated ? this.cmd.range.html() : '';
+		val = _removeBookmarkTag(_removeTempTag(val));
+		return val;
 	},
 	count : function(mode) {
 		var self = this;
 		mode = (mode || 'html').toLowerCase();
 		if (mode === 'html') {
-			return _removeBookmarkTag(_removeTempTag(self.html())).length;
+			return self.html().length;
 		}
 		if (mode === 'text') {
 			return self.text().replace(/<(?:img|embed).*?>/ig, 'K').replace(/\r\n|\n|\r/g, '').length;
@@ -5234,6 +5284,7 @@ KEditor.prototype = {
 	},
 	fullscreen : function(bool) {
 		this.fullscreenMode = (bool === undefined ? !this.fullscreenMode : bool);
+		this.addBookmark(false);
 		return this.remove().create();
 	},
 	readonly : function(isReadonly) {
@@ -5365,7 +5416,9 @@ function _create(expr, options) {
 	}
 	function create(editor) {
 		_each(_plugins, function(name, fn) {
-			fn.call(editor, KindEditor);
+			if (_isFunction(fn)) {
+				fn.call(editor, KindEditor);
+			}
 		});
 		return editor.create();
 	}
@@ -5394,7 +5447,7 @@ function _eachEditor(expr, fn) {
 	K(expr).each(function(i, el) {
 		K.each(_instances, function(j, editor) {
 			if (editor && editor.srcElement[0] == el) {
-				fn.call(editor, j, editor);
+				fn.call(editor, j);
 				return false;
 			}
 		});
@@ -5409,6 +5462,21 @@ K.remove = function(expr) {
 K.sync = function(expr) {
 	_eachEditor(expr, function() {
 		this.sync();
+	});
+};
+K.html = function(expr, val) {
+	_eachEditor(expr, function() {
+		this.html(val);
+	});
+};
+K.insertHtml = function(expr, val) {
+	_eachEditor(expr, function() {
+		this.insertHtml(val);
+	});
+};
+K.appendHtml = function(expr, val) {
+	_eachEditor(expr, function() {
+		this.appendHtml(val);
 	});
 };
 if (_IE && _V < 7) {
@@ -5468,6 +5536,13 @@ _plugin('core', function(K) {
 			self.toolbar.disableAll(false);
 			self.edit.design(true);
 			self.toolbar.unselect('source');
+			if (_GECKO) {
+				setTimeout(function() {
+					self.cmd.selection();
+				}, 0);
+			} else {
+				self.cmd.selection();
+			}
 		}
 		self.designMode = self.edit.designMode;
 	});
@@ -5603,7 +5678,7 @@ _plugin('core', function(K) {
 			'</div>';
 		self.createDialog({
 			name : 'about',
-			width : 300,
+			width : 350,
 			title : self.lang('about'),
 			body : html
 		});
@@ -5786,16 +5861,30 @@ _plugin('core', function(K) {
 			html = html.replace(/<div\s+[^>]*data-ke-input-tag="([^"]*)"[^>]*>([\s\S]*?)<\/div>/ig, function(full, tag) {
 				return unescape(tag);
 			});
+			html = html.replace(/(<input)((?:\s+[^>]*)?>)/ig, function($0, $1, $2) {
+				if (!/\s+type="[^"]+"/i.test($0)) {
+					return $1 + ' type="text"' + $2;
+				}
+				return $0;
+			});
 		}
 		return html.replace(/(<(?:noscript|noscript\s[^>]*)>)([\s\S]*?)(<\/noscript>)/ig, function($0, $1, $2, $3) {
 			return $1 + _unescape($2).replace(/\s+/g, ' ') + $3;
 		})
 		.replace(/<img[^>]*class="?ke-(flash|rm|media)"?[^>]*>/ig, function(full) {
-			var imgAttrs = _getAttrList(full),
-				styles = _getCssList(imgAttrs.style || ''),
-				attrs = _mediaAttrs(imgAttrs['data-ke-tag']);
-			attrs.width = _undef(imgAttrs.width, _removeUnit(_undef(styles.width, '')));
-			attrs.height = _undef(imgAttrs.height, _removeUnit(_undef(styles.height, '')));
+			var imgAttrs = _getAttrList(full);
+			var styles = _getCssList(imgAttrs.style || '');
+			var attrs = _mediaAttrs(imgAttrs['data-ke-tag']);
+			var width = _undef(styles.width, '');
+			var height = _undef(styles.height, '');
+			if (/px/i.test(width)) {
+				width = _removeUnit(width);
+			}
+			if (/px/i.test(height)) {
+				height = _removeUnit(height);
+			}
+			attrs.width = _undef(imgAttrs.width, width);
+			attrs.height = _undef(imgAttrs.height, height);
 			return _mediaEmbed(attrs);
 		})
 		.replace(/<img[^>]*class="?ke-anchor"?[^>]*>/ig, function(full) {

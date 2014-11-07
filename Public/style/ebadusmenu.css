@@ -55,7 +55,7 @@ del{font-family:georgia}
 .hg{line-height: 24px; }
 a {text-decoration:none;color: #666; cursor:pointer; }
 
-#top,headerb,#banner ,#container_1,#container_2,container2,container1,#ym_text,#about_text,.foot{width:980px; margin:0 auto; }
+#top,#headerb,#banner ,#container_1,#container_2,container2,container1,#ym_text,#about_text,.foot{width:980px; margin:0 auto; }
 
 
 /***************************************************                       **************************************************/

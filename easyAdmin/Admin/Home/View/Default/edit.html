@@ -5,6 +5,7 @@
     <div class="current">编辑数据</div>
 </div>
 <table width="100%" border="0" cellspacing="0" cellpadding="0" class="table1" id="form_inputs">
+    <form id='ajaxupload' action="{:U(CONTROLLER_NAME . '/update')}" method='post' enctype='multipart/form-data'>
    <volist name="inputs" id="input">
     <tr>
         <th width="100">{$input['label']}：</th>
@@ -12,6 +13,7 @@
     </tr>
     </volist>
     <input type="hidden" name="{$hidden['name']}" value="{$hidden['value']}" />
+        </form>
 </table>
 <div class="commonBtnArea" >
     <button class="btn submit">提交</button>
