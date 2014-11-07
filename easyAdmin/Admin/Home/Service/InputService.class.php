@@ -157,6 +157,9 @@ class InputService extends CommonService {
                 $orders[$key] = $inputs[$key]['show_order'];
             }
         }
+
+        //var_dump($inputs);
+
         // 排序表单域
         array_multisort($orders, $inputs);
 
